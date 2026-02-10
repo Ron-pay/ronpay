@@ -1,6 +1,6 @@
 # 💰 RonPay
 
-> AI-powered payment agent for Africa. Send money using natural language, schedule recurring payments, and auto-pay bills.
+> AI-powered payment agent for Africa and Beyond. Send money using natural language, schedule recurring payments, and auto-pay bills.
 
 [![Built on Celo](https://img.shields.io/badge/Built%20on-Celo-FCFF52)](https://celo.org)
 [![ERC-8004](https://img.shields.io/badge/ERC--8004-Verified-00C853)](https://8004scan.io)
