@@ -1,7 +1,7 @@
 # RonPay Backend API Documentation
 
 ## Base URL
-`http://localhost:3000` (Local)
+`http://localhost:3001` (Local: Default if PORT env not set)
 `https://ronpay-api.railway.app` (Production)
 
 ## Authentication
