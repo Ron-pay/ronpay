@@ -1,0 +1,52 @@
+{
+  "name": "RonPay",
+  "description": "AI-powered payment agent for Africa. Send money, pay bills, and schedule payments using natural language on Celo blockchain.",
+  "image": "https://ronpay.xyz/images/ronpay-agent-avatar.png",
+  "version": "1.0.0",
+  "capabilities": [
+    "natural-language-payment-processing",
+    "cross-border-remittances",
+    "bill-payment-vtpass",
+    "recurring-payment-scheduling",
+    "multi-stablecoin-support",
+    "sms-notifications"
+  ],
+  "communication": {
+    "protocols": [
+      "https",
+      "websocket"
+    ],
+    "endpoints": {
+      "api": "https://api.ronpay.xyz/v1",
+      "chat": "wss://api.ronpay.xyz/chat"
+    }
+  },
+  "blockchain": {
+    "networks": ["celo"],
+    "supportedTokens": ["cUSD", "cKES", "cREAL", "CELO"],
+    "walletAddress": "TO_BE_FILLED"
+  },
+  "regions": ["Nigeria", "Kenya", "Ghana", "South Africa"],
+  "languages": ["en", "yo", "sw", "ha"],
+  "trustMechanisms": [
+    "erc-8004-reputation",
+    "transaction-history",
+    "user-ratings"
+  ],
+  "externalUrl": "https://ronpay.xyz",
+  "documentation": "https://docs.ronpay.xyz",
+  "tags": [
+    "payments",
+    "ai",
+    "africa",
+    "celo",
+    "natural-language",
+    "bills",
+    "remittance",
+    "mobile-first"
+  ],
+  "social": {
+    "telegram": "https://t.me/ronpay",
+    "twitter": "https://twitter.com/ronpay"
+  }
+}
