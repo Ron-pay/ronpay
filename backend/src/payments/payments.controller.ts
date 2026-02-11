@@ -1,7 +1,7 @@
 import { Controller, Post, Get, Body, Param, HttpCode, HttpStatus } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { TransactionsService } from '../transactions/transactions.service';
-import { NaturalLanguagePaymentDto } from './dto/natural-language-payment.dto';
+import { NaturalLanguagePaymentDto, ExecutePaymentDto } from './dto/natural-language-payment.dto';
 
 @Controller('payments')
 export class PaymentsController {
@@ -11,13 +11,34 @@ export class PaymentsController {
   ) {}
 
   /**
-   * Process natural language payment request
-   * POST /payments/natural-language
+   * Parse natural language payment request and return unsigned transaction
+   * POST /payments/parse-intent
+   *
+   * MiniPay Flow:
+   * 1. Frontend sends natural language message
+   * 2. Backend parses intent with Claude AI
+   * 3. Returns transaction data for MiniPay to sign
    */
-  @Post('natural-language')
+  @Post('parse-intent')
   @HttpCode(HttpStatus.OK)
-  async processNaturalLanguagePayment(@Body() dto: NaturalLanguagePaymentDto) {
-    return this.paymentsService.processNaturalLanguagePayment(dto);
+  async parsePaymentIntent(@Body() dto: NaturalLanguagePaymentDto) {
+    return this.paymentsService.parsePaymentIntent(dto);
+  }
+
+  /**
+   * Record a transaction that was signed and broadcasted by MiniPay
+   * POST /payments/execute
+   * 
+   * MiniPay Flow:
+   * 1. MiniPay signs transaction client-side
+   * 2. User broadcasts transaction
+   * 3. Frontend sends txHash to backend
+   * 4. Backend records transaction and monitors confirmation
+   */
+  @Post('execute')
+  @HttpCode(HttpStatus.OK)
+  async executePayment(@Body() dto: ExecutePaymentDto) {
+    return this.paymentsService.recordTransaction(dto);
   }
 
   /**
@@ -55,6 +76,15 @@ export class PaymentsController {
   }
 
   /**
+   * Get supported tokens and their addresses
+   * GET /payments/tokens
+   */
+  @Get('tokens')
+  getSupportedTokens() {
+    return this.paymentsService.getSupportedTokens();
+  }
+
+  /**
    * Health check endpoint
    * GET /payments/health
    */
@@ -64,6 +94,7 @@ export class PaymentsController {
       status: 'ok',
       service: 'RonPay Payments API',
       version: '1.0.0',
+      minipayCompatible: true,
       timestamp: new Date().toISOString(),
     };
   }

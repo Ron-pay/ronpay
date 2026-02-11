@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { createPublicClient, createWalletClient, http, parseUnits, formatUnits, Address } from 'viem';
+import { createPublicClient, http, parseUnits, formatUnits, Address } from 'viem';
 import { celo } from 'viem/chains';
-import { privateKeyToAccount } from 'viem/accounts';
 import { ERC20_ABI } from '../abis/erc20';
 
 // Celo token addresses on Mainnet
-const CELO_TOKENS = {
+export const CELO_TOKENS = {
   cUSD: '0x765DE816845861e75A25fCA122bb6898B8B1282a',
   cEUR: '0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73',
   cREAL: '0xe8537a3d056DA446677B9E9d6c5dB704EaAb4787',
@@ -13,63 +12,54 @@ const CELO_TOKENS = {
   CELO: 'native',
 } as const;
 
-
 @Injectable()
 export class CeloService {
   private publicClient;
-  private walletClient;
 
   constructor() {
     this.publicClient = createPublicClient({
       chain: celo,
       transport: http(process.env.CELO_RPC_URL || 'https://forno.celo.org'),
     });
-
-    // For demo purposes - in production, use user's wallet via wallet connect
-    // This is just for backend-initiated transactions if needed
-    if (process.env.CELO_PRIVATE_KEY) {
-      const account = privateKeyToAccount(process.env.CELO_PRIVATE_KEY as `0x${string}`);
-      this.walletClient = createWalletClient({
-        account,
-        chain: celo,
-        transport: http(process.env.CELO_RPC_URL || 'https://forno.celo.org'),
-      });
-    }
   }
 
   /**
-   * Send payment on Celo network
+   * Build transaction data for client-side signing (MiniPay compatible)
+   * Returns unsigned transaction that MiniPay will sign
    */
-  async sendPayment(
+  async buildPaymentTransaction(
     to: Address,
     amount: string,
     token: keyof typeof CELO_TOKENS = 'cUSD',
-  ): Promise<string> {
-    if (!this.walletClient) {
-      throw new Error('Wallet client not configured. Set CELO_PRIVATE_KEY in .env');
-    }
-
+    feeCurrency?: Address,
+  ) {
     const amountInWei = parseUnits(amount, 18);
 
     if (token === 'CELO') {
-      // Send native CELO
-      const hash = await this.walletClient.sendTransaction({
+      // Native CELO transfer
+      return {
         to,
-        value: amountInWei,
-      });
-      return hash;
+        value: amountInWei.toString(),
+        data: '0x' as `0x${string}`,
+        feeCurrency: feeCurrency || CELO_TOKENS.cUSD, // Pay gas in cUSD by default
+      };
     } else {
-      // Send ERC20 token (cUSD, cEUR, etc.)
+      // ERC20 token transfer
       const tokenAddress = CELO_TOKENS[token] as Address;
       
-      const hash = await this.walletClient.writeContract({
-        address: tokenAddress,
+      // Encode transfer function call
+      const data = this.publicClient.encodeFunctionData({
         abi: ERC20_ABI,
         functionName: 'transfer',
         args: [to, amountInWei],
       });
 
-      return hash;
+      return {
+        to: tokenAddress,
+        value: '0',
+        data,
+        feeCurrency: feeCurrency || CELO_TOKENS.cUSD, // Pay gas in cUSD
+      };
     }
   }
 
@@ -81,11 +71,9 @@ export class CeloService {
     token: keyof typeof CELO_TOKENS = 'cUSD',
   ): Promise<string> {
     if (token === 'CELO') {
-      // Get native CELO balance
       const balance = await this.publicClient.getBalance({ address });
       return formatUnits(balance, 18);
     } else {
-      // Get ERC20 token balance
       const tokenAddress = CELO_TOKENS[token] as Address;
       
       const balance = await this.publicClient.readContract({
@@ -100,6 +88,27 @@ export class CeloService {
   }
 
   /**
+   * Get multiple token balances at once
+   */
+  async getAllBalances(address: Address) {
+    const [cUSD, CELO, cKES, cEUR, cREAL] = await Promise.all([
+      this.getBalance(address, 'cUSD'),
+      this.getBalance(address, 'CELO'),
+      this.getBalance(address, 'cKES'),
+      this.getBalance(address, 'cEUR'),
+      this.getBalance(address, 'cREAL'),
+    ]);
+
+    return {
+      cUSD: parseFloat(cUSD),
+      CELO: parseFloat(CELO),
+      cKES: parseFloat(cKES),
+      cEUR: parseFloat(cEUR),
+      cREAL: parseFloat(cREAL),
+    };
+  }
+
+  /**
    * Get transaction receipt
    */
   async getTransactionReceipt(txHash: `0x${string}`) {
@@ -110,7 +119,21 @@ export class CeloService {
    * Wait for transaction confirmation
    */
   async waitForTransaction(txHash: `0x${string}`) {
-    return this.publicClient.waitForTransactionReceipt({ hash: txHash });
+    return this.publicClient.waitForTransactionReceipt({
+      hash: txHash,
+      timeout: 60_000, // 60 seconds
+    });
+  }
+
+  /**
+   * Estimate gas for a transaction
+   */
+  async estimateGas(transaction: {
+    to: Address;
+    value?: bigint;
+    data?: `0x${string}`;
+  }) {
+    return this.publicClient.estimateGas(transaction);
   }
 
   /**
@@ -118,6 +141,13 @@ export class CeloService {
    */
   getSupportedTokens() {
     return Object.keys(CELO_TOKENS);
+  }
+
+  /**
+   * Get token address by symbol
+   */
+  getTokenAddress(token: keyof typeof CELO_TOKENS): Address | 'native' {
+    return CELO_TOKENS[token];
   }
 
   /**

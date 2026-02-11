@@ -2,7 +2,8 @@ import { Injectable, BadRequestException, InternalServerErrorException } from '@
 import { CeloService } from '../blockchain/celo.service';
 import { ClaudeService } from '../ai/claude.service';
 import { TransactionsService } from '../transactions/transactions.service';
-import { NaturalLanguagePaymentDto } from './dto/natural-language-payment.dto';
+import { NaturalLanguagePaymentDto, ExecutePaymentDto } from './dto/natural-language-payment.dto';
+import { Address } from 'viem';
 
 @Injectable()
 export class PaymentsService {
@@ -12,7 +13,11 @@ export class PaymentsService {
     private transactionsService: TransactionsService,
   ) {}
 
-  async processNaturalLanguagePayment(dto: NaturalLanguagePaymentDto) {
+  /**
+   * Parse natural language and return transaction data for client-side signing
+   * MiniPay-compatible: Returns unsigned transaction
+   */
+  async parsePaymentIntent(dto: NaturalLanguagePaymentDto) {
     // 1. Parse intent with Claude AI
     const intent = await this.claudeService.parsePaymentIntent(dto.message);
 
@@ -44,77 +49,95 @@ export class PaymentsService {
       throw new BadRequestException(`Invalid recipient address: ${intent.recipient}`);
     }
 
-    try {
-      // 4. Send payment via Celo
-      const currency = intent.currency || 'cUSD';
-      const txHash = await this.celoService.sendPayment(
-        intent.recipient as `0x${string}`,
-        intent.amount.toString(),
-        currency as any,
-      );
+    // 4. Build unsigned transaction for MiniPay to sign
+    const currency = intent.currency || 'cUSD';
+    const transactionData = await this.celoService.buildPaymentTransaction(
+      intent.recipient as Address,
+      intent.amount.toString(),
+      currency as any,
+    );
 
-      // 5. Save transaction to database
-      const transaction = await this.transactionsService.create({
-        fromAddress: dto.senderAddress.toLowerCase(),
-        toAddress: intent.recipient.toLowerCase(),
+    // 5. Return transaction data + intent for frontend
+    return {
+      intent,
+      transaction: transactionData,
+      parsedCommand: {
+        recipient: intent.recipient,
         amount: intent.amount,
         currency,
-        txHash,
-        status: 'pending',
-        intent: dto.message,
-        memo: intent.memo || '',
-      });
-
-      // 6. Generate confirmation message
-      const confirmation = await this.claudeService.generatePaymentConfirmation(
-        intent.amount,
-        currency,
-        intent.recipient,
-        txHash,
-      );
-
-      // 7. Wait for transaction and update status (non-blocking in real app)
-      this.celoService.waitForTransaction(txHash as `0x${string}`)
-        .then((receipt) => {
-          const status = receipt.status === 'success' ? 'success' : 'failed';
-          this.transactionsService.updateStatus(txHash, status);
-        })
-        .catch((error) => {
-          console.error('Transaction confirmation error:', error);
-          this.transactionsService.updateStatus(txHash, 'failed');
-        });
-
-      return {
-        transaction,
-        txHash,
-        confirmation,
-        intent,
-      };
-    } catch (error) {
-      console.error('Payment error:', error);
-      throw new InternalServerErrorException(
-        `Payment failed: ${error.message || 'Unknown error'}`,
-      );
-    }
+        memo: intent.memo,
+      },
+    };
   }
 
+  /**
+   * Record a transaction that was executed client-side (by MiniPay)
+   * Called after user signs and broadcasts the transaction
+   */
+  async recordTransaction(dto: ExecutePaymentDto) {
+    // Validate transaction hash format
+    if (!/^0x[a-fA-F0-9]{64}$/.test(dto.txHash)) {
+      throw new BadRequestException('Invalid transaction hash format');
+    }
+
+    // Save transaction to database
+    const transaction = await this.transactionsService.create({
+      fromAddress: dto.fromAddress.toLowerCase(),
+      toAddress: dto.toAddress.toLowerCase(),
+      amount: dto.amount,
+      currency: dto.currency,
+      txHash: dto.txHash,
+      status: 'pending',
+      intent: dto.intent || '',
+      memo: dto.memo || '',
+    });
+
+    // Monitor transaction confirmation in background
+    this.celoService.waitForTransaction(dto.txHash as `0x${string}`)
+      .then((receipt) => {
+        const status = receipt.status === 'success' ? 'success' : 'failed';
+        this.transactionsService.updateStatus(dto.txHash, status);
+      })
+      .catch((error) => {
+        console.error('Transaction confirmation error:', error);
+        this.transactionsService.updateStatus(dto.txHash, 'failed');
+      });
+
+    return {
+      success: true,
+      transaction,
+      message: 'Transaction recorded and being monitored',
+    };
+  }
+
+  /**
+   * Get balance for a wallet address
+   */
   async getBalance(address: string) {
     if (!this.celoService.isValidAddress(address)) {
       throw new BadRequestException(`Invalid address: ${address}`);
     }
 
-    const [cUSD, CELO, cKES] = await Promise.all([
-      this.celoService.getBalance(address as `0x${string}`, 'cUSD'),
-      this.celoService.getBalance(address as `0x${string}`, 'CELO'),
-      this.celoService.getBalance(address as `0x${string}`, 'cKES'),
-    ]);
+    const balances = await this.celoService.getAllBalances(address as Address);
 
     return {
       address,
-      balances: {
-        cUSD: parseFloat(cUSD),
-        CELO: parseFloat(CELO),
-        cKES: parseFloat(cKES),
+      balances,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Get supported tokens
+   */
+  getSupportedTokens() {
+    return {
+      tokens: this.celoService.getSupportedTokens(),
+      mainnet: {
+        cUSD: '0x765DE816845861e75A25fCA122bb6898B8B1282a',
+        cEUR: '0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73',
+        cREAL: '0xe8537a3d056DA446677B9E9d6c5dB704EaAb4787',
+        cKES: '0x456a3D042C0DbD3db53D5489e98dFb038553B0d0',
       },
     };
   }
