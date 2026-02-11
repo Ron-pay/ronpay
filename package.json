@@ -4,12 +4,11 @@
   "description": "RonPay - AI-powered payment agent for Africa and Beyond on Celo",
   "private": true,
   "workspaces": [
-    "backend",
-    "frontend"
+    "backend"
   ],
   "scripts": {
-    "dev": "concurrently \"pnpm --filter backend dev\" \"pnpm --filter frontend dev\"",
-    "build": "pnpm --filter backend build && pnpm --filter frontend build",
+    "dev": "pnpm --filter backend dev",
+    "build": "pnpm --filter backend build",
     "test": "pnpm --recursive test"
   },
   "devDependencies": {
