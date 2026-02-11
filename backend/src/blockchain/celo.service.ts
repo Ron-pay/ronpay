@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { createPublicClient, createWalletClient, http, parseUnits, formatUnits, Address } from 'viem';
 import { celo } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
+import { ERC20_ABI } from '../abis/erc20';
 
 // Celo token addresses on Mainnet
 const CELO_TOKENS = {
@@ -12,26 +13,6 @@ const CELO_TOKENS = {
   CELO: 'native',
 } as const;
 
-// ERC20 ABI for token transfers
-const ERC20_ABI = [
-  {
-    inputs: [
-      { name: 'to', type: 'address' },
-      { name: 'amount', type: 'uint256' },
-    ],
-    name: 'transfer',
-    outputs: [{ name: '', type: 'bool' }],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [{ name: 'account', type: 'address' }],
-    name: 'balanceOf',
-    outputs: [{ name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-] as const;
 
 @Injectable()
 export class CeloService {

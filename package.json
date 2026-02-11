@@ -1,7 +1,7 @@
 {
   "name": "ronpay-monorepo",
   "version": "1.0.0",
-  "description": "RonPay - AI-powered payment agent for Africa on Celo",
+  "description": "RonPay - AI-powered payment agent for Africa and Beyond on Celo",
   "private": true,
   "workspaces": [
     "backend",
