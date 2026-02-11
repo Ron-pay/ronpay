@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
 
-interface PaymentIntent {
+export interface PaymentIntent {
   action: 'send_payment' | 'check_balance' | 'pay_bill' | 'unknown';
   recipient?: string;
   amount?: number;
