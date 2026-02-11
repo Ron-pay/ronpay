@@ -24,13 +24,23 @@ export class Transaction {
   txHash: string;
 
   @Column({ default: 'pending' })
-  status: string; // pending, success, failed
+  status: string; // 'pending', 'success', 'failed'
 
-  @Column({ type: 'text', nullable: true })
-  intent: string; // Original user command
+  @Column({ nullable: true })
+  intent: string; // Original NL command
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ nullable: true })
   memo: string;
+
+  // New fields for AI Context & Bill Payments
+  @Column({ default: 'transfer' })
+  type: string; // 'transfer', 'airtime', 'data', 'electricity', 'tv'
+
+  @Column({ nullable: true })
+  serviceId: string; // e.g., 'mtn-airtime', 'dstv'
+
+  @Column('jsonb', { nullable: true })
+  metadata: any; // Store phone numbers, meter numbers, data plans, etc.
 
   @CreateDateColumn()
   createdAt: Date;
