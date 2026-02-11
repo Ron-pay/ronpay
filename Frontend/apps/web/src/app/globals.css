@@ -78,3 +78,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile-specific styles for chat interface */
+@layer utilities {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .chat-scroll {
+    scroll-behavior: smooth;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
