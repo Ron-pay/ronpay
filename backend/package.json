@@ -22,6 +22,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.74.0",
     "@celo/identity": "^5.1.2",
+    "@google/generative-ai": "^0.24.1",
     "@mento-protocol/mento-sdk": "2.0.0-beta.16",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/bull": "^11.0.4",
