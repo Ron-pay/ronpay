@@ -4,6 +4,7 @@ import { MentoService } from '../blockchain/mento.service';
 import { IdentityService } from '../blockchain/identity.service';
 import { ClaudeService } from '../ai/claude.service';
 import { TransactionsService } from '../transactions/transactions.service';
+import { VtpassService } from '../vtpass/vtpass.service';
 import { NaturalLanguagePaymentDto, ExecutePaymentDto } from './dto/natural-language-payment.dto';
 import { Address } from 'viem';
 
@@ -15,6 +16,7 @@ export class PaymentsService {
     private transactionsService: TransactionsService,
     private mentoService: MentoService,
     private identityService: IdentityService,
+    private vtpassService: VtpassService,
   ) {}
 
   /**
@@ -161,9 +163,29 @@ export class PaymentsService {
         if (receipt.status === 'success') {
           await this.transactionsService.updateStatus(dto.txHash, 'success');
 
-          // TODO: Here is where we would trigger actual VTPASS purchase if it was a bill payment
           // Check if transaction.toAddress === TREASURY_ADDRESS
-          // And if we have metadata about the bill (this would require passing metadata in ExecutePaymentDto)
+          const treasuryAddress = process.env.RONPAY_TREASURY_ADDRESS;
+          const isToTreasury = dto.toAddress.toLowerCase() === treasuryAddress?.toLowerCase();
+
+          if (isToTreasury && dto.metadata && dto.metadata.provider === 'VTPASS') {
+            console.log('Triggering VTPASS purchase for confirmed transaction:', dto.txHash);
+            try {
+              await this.vtpassService.purchaseProduct({
+                serviceID: dto.serviceId || 'airtime', // fallback
+                billersCode: dto.metadata.recipient, // phone or meter
+                variation_code: dto.metadata.variation_code,
+                amount: dto.metadata.originalAmountNgn || 100, // Use NGN amount
+                phone: dto.metadata.recipient, // For notifications?
+                walletAddress: dto.fromAddress,
+                request_id: dto.txHash, // Use txHash as idempotency key? Or part of it.
+              });
+              await this.transactionsService.updateStatus(dto.txHash, 'success_delivered'); // Mark as fully complete
+            } catch (err) {
+              console.error('VTPASS Execution Failed after payment:', err);
+              // We should probably log this critical failure (User paid but didn't get service) -> Manual Refund Needed state
+              await this.transactionsService.updateStatus(dto.txHash, 'failed_service_error');
+            }
+          }
         } else {
           await this.transactionsService.updateStatus(dto.txHash, 'failed');
         }

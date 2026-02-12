@@ -27,18 +27,21 @@ User message: "${userMessage}"
 
 Return JSON with these fields:
 {
-  "action": "send_payment" | "check_balance" | "pay_bill" | "unknown",
-  "recipient": "wallet address (0x...) or phone number if mentioned, otherwise null",
+  "action": "send_payment" | "check_balance" | "pay_bill" | "buy_airtime" | "buy_data" | "unknown",
+  "recipient": "wallet address, phone number, or smartcard number",
   "amount": number (extract numeric value, null if not mentioned),
-  "currency": "cUSD" | "cKES" | "cREAL" | "CELO" (default to cUSD if not specified),
-  "memo": "optional payment description or null",
-  "confidence": 0.0 to 1.0 (how confident you are in this parsing)
+  "currency": "cUSD" | "cKES" | "cREAL" | "CELO" | "NGN" | "KES" (default cUSD for crypto, NGN for Nigerian bills),
+  "memo": "optional description",
+  "biller": "provider name if applicable (e.g. MTN, Airtel, DSTV, IKEDC, EEDC)",
+  "package": "plan/bundle name if applicable (e.g. 1GB, Premium, Prepaid)",
+  "confidence": 0.0 to 1.0
 }
 
 Examples:
-- "Send $100 to 0x123..." → {"action":"send_payment","recipient":"0x123...","amount":100,"currency":"cUSD","memo":null,"confidence":0.95}
-- "Check my balance" → {"action":"check_balance","recipient":null,"amount":null,"currency":null,"memo":null,"confidence":1.0}
-- "Pay my DSTV bill" → {"action":"pay_bill","recipient":"DSTV","amount":null,"currency":"cUSD","memo":"DSTV subscription","confidence":0.8}
+- "Send $100 to 0x123..." → {"action":"send_payment","recipient":"0x123...","amount":100,"currency":"cUSD","biller":null,"package":null,"confidence":0.95}
+- "Buy 1000 Naira MTN airtime for 08012345678" → {"action":"buy_airtime","recipient":"08012345678","amount":1000,"currency":"NGN","biller":"MTN","package":null,"confidence":0.95}
+- "Pay my DSTV Premium subscription with smartcard 1234567890" → {"action":"pay_bill","recipient":"1234567890","amount":null,"currency":"NGN","biller":"DSTV","package":"Premium","confidence":0.9}
+- "Buy 1GB MTN data for 080..." → {"action":"buy_data","recipient":"080...","amount":null,"currency":"NGN","biller":"MTN","package":"1GB","confidence":0.9}
 
 Return ONLY the JSON, no explanation.`;
 
