@@ -1,5 +1,7 @@
 import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { CeloService } from '../blockchain/celo.service';
+import { MentoService } from '../blockchain/mento.service';
+import { IdentityService } from '../blockchain/identity.service';
 import { ClaudeService } from '../ai/claude.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { NaturalLanguagePaymentDto, ExecutePaymentDto } from './dto/natural-language-payment.dto';
@@ -11,6 +13,8 @@ export class PaymentsService {
     private celoService: CeloService,
     private claudeService: ClaudeService,
     private transactionsService: TransactionsService,
+    private mentoService: MentoService,
+    private identityService: IdentityService,
   ) {}
 
   /**
@@ -75,11 +79,24 @@ export class PaymentsService {
    * Flow: User pays cUSD to Treasury -> Backend detects tx -> Backend triggers VTPASS
    */
   private async handleVtpassIntent(intent: any) {
-    // 1. Determine amount in cUSD (Mock rate 1 cUSD = 1500 NGN for MVP)
-    // In production, fetch real rates.
-    const MOCK_RATE_NGN_CUSD = 1500;
+    // 1. Determine amount in cUSD using Mento Service
+    // We want to know: "How much cUSD is 100 NGN?" -> Swap cNGN -> cUSD
     const amountInNgn = intent.amount || 100; // Default 100 NGN
-    const amountInCusd = (amountInNgn / MOCK_RATE_NGN_CUSD).toFixed(2);
+
+    let exchangeRate = 1500; // Fallback
+    let amountInCusd = '0.07';
+
+    try {
+      // Get quote: 1 cUSD -> NGN (to get the rate) OR amountInNgn cNGN -> cUSD?
+      // Let's ask: "What is value of X cNGN in cUSD?"
+      const quote = await this.mentoService.getSwapQuote('cNGN', 'cUSD', amountInNgn.toString());
+      amountInCusd = parseFloat(quote.amountOut).toFixed(2);
+      exchangeRate = 1 / quote.price; // Derived rate
+    } catch (error) {
+      console.error('Failed to get Mento rate for VTPASS, using fallback', error);
+      // Fallback calculation
+      amountInCusd = (amountInNgn / 1500).toFixed(2);
+    }
 
     // 2. Get Treasury Address
     const treasuryAddress = process.env.RONPAY_TREASURY_ADDRESS;
@@ -102,7 +119,7 @@ export class PaymentsService {
         provider: intent.provider,
         recipient: intent.recipient, // phone or meter number
         originalAmountNgn: amountInNgn,
-        exchangeRate: MOCK_RATE_NGN_CUSD,
+        exchangeRate: exchangeRate,
       },
       parsedCommand: {
         recipient: 'RonPay Treasury', // Displayed to user
@@ -133,7 +150,9 @@ export class PaymentsService {
       status: 'pending',
       intent: dto.intent || '',
       memo: dto.memo || '',
-      type: dto.intent?.includes('buy') || dto.intent?.includes('pay') ? 'bill_payment' : 'transfer', // Simple heuristic
+      type: dto.type || (dto.intent?.includes('buy') || dto.intent?.includes('pay') ? 'bill_payment' : 'transfer'),
+      serviceId: dto.serviceId,
+      metadata: dto.metadata,
     });
 
     // Monitor transaction confirmation in background
