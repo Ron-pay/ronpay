@@ -9,6 +9,8 @@ export const CELO_TOKENS = {
   cEUR: '0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73',
   cREAL: '0xe8537a3d056DA446677B9E9d6c5dB704EaAb4787',
   cKES: '0x456a3D042C0DbD3db53D5489e98dFb038553B0d0',
+  cNGN: '0xC6a531d7CdEbaD7FDFAfb6d96D9C8724Ceb9C0A7', // Alfajores/Mainnet check needed
+  // Add other stablecoins as needed
   CELO: 'native',
 } as const;
 
