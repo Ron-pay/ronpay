@@ -37,4 +37,16 @@ export class ExecutePaymentDto {
   @IsOptional()
   @IsString()
   memo?: string;
+
+  // Fields for VTPASS/AI Context
+  @IsOptional()
+  @IsString()
+  type?: string;
+
+  @IsOptional()
+  @IsString()
+  serviceId?: string;
+
+  @IsOptional()
+  metadata?: any;
 }

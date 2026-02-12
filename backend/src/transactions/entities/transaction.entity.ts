@@ -32,7 +32,7 @@ export class Transaction {
   @Column({ nullable: true })
   memo: string;
 
-  // New fields for AI Context & Bill Payments
+  // Fields for AI Context & Bill Payments
   @Column({ default: 'transfer' })
   type: string; // 'transfer', 'airtime', 'data', 'electricity', 'tv'
 
