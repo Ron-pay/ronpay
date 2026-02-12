@@ -11,7 +11,7 @@ export class ClaudeService {
     if (!apiKey) {
       throw new Error('ANTHROPIC_API_KEY not configured in environment');
     }
-    
+
     this.client = new Anthropic({ apiKey });
   }
 
@@ -90,7 +90,9 @@ Make it brief, friendly, and include the transaction hash. Max 2 sentences.`;
       });
 
       const content = message.content[0];
-      return content.type === 'text' ? content.text : 'Payment sent successfully!';
+      return content.type === 'text'
+        ? content.text
+        : 'Payment sent successfully!';
     } catch (error) {
       return `Successfully sent ${amount} ${currency} to ${recipient}. Transaction: ${txHash}`;
     }

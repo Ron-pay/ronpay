@@ -7,15 +7,22 @@ async function bootstrap() {
 
   // Enable CORS for frontend
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://ronpay.xyz'],
+    origin: [
+      'http://localhost:3000',
+      'https://ronpay.xyz',
+      /\.ngrok-free\.dev$/, // Allow all ngrok domains
+      /\.ngrok\.io$/, // Allow ngrok.io domains
+    ],
     credentials: true,
   });
 
   // Enable validation
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    transform: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+    }),
+  );
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

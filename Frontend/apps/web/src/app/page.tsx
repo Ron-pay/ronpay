@@ -8,6 +8,12 @@ import { ServiceButtons } from "@/components/chat/ServiceButtons";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { PurchaseCard } from "@/components/chat/PurchaseCard";
 import { BottomNav } from "@/components/chat/BottomNav";
+import { PaymentIntentDisplay } from "@/components/payment/PaymentIntentDisplay";
+import { PaymentConfirmation } from "@/components/payment/PaymentConfirmation";
+import { BalanceDisplay } from "@/components/payment/BalanceDisplay";
+import { useMiniPayWallet } from "@/hooks/useMiniPayWallet";
+import { usePaymentIntent } from "@/hooks/usePaymentIntent";
+import type { ParseIntentResponse } from "@/types/payment";
 
 interface Message {
   id: string;
@@ -42,8 +48,14 @@ export default function Home() {
   const [pendingPurchase, setPendingPurchase] = React.useState<Purchase | null>(
     null,
   );
+  const [parsedIntent, setParsedIntent] =
+    React.useState<ParseIntentResponse | null>(null);
+  const [showBalance, setShowBalance] = React.useState(false);
 
-  const handleSendMessage = (text: string) => {
+  const { address, isConnected } = useMiniPayWallet();
+  const { data, loading, error, parseIntent, reset } = usePaymentIntent();
+
+  const handleSendMessage = async (text: string) => {
     const newMessage: Message = {
       id: Date.now().toString(),
       text,
@@ -51,16 +63,57 @@ export default function Home() {
     };
     setMessages((prev) => [...prev, newMessage]);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse: Message = {
+    // Reset previous states
+    setParsedIntent(null);
+    setShowBalance(false);
+    reset();
+
+    // Check if wallet is connected
+    if (!isConnected || !address) {
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "I understand you want to make a purchase. Let me help you with that!",
+        text: "⚠️ Please connect your MiniPay wallet to continue.",
         isUser: false,
       };
-      setMessages((prev) => [...prev, aiResponse]);
-    }, 1000);
+      setMessages((prev) => [...prev, errorMessage]);
+      return;
+    }
+
+    // Parse payment intent with AI
+    await parseIntent(text, address);
   };
+
+  // Handle AI parsing results
+  React.useEffect(() => {
+    if (data) {
+      setParsedIntent(data);
+
+      // Add AI response message
+      const aiMessage: Message = {
+        id: Date.now().toString(),
+        text: `✅ I understood your request: ${data.intent.action.replace(
+          "_",
+          " ",
+        )}`,
+        isUser: false,
+      };
+      setMessages((prev) => [...prev, aiMessage]);
+
+      // Handle check_balance action
+      if (data.intent.action === "check_balance") {
+        setShowBalance(true);
+      }
+    }
+
+    if (error) {
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        text: `❌ ${error}`,
+        isUser: false,
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    }
+  }, [data, error]);
 
   const handleBuyAirtime = () => {
     const message = "I want to buy airtime";
@@ -109,6 +162,29 @@ export default function Home() {
     setPendingPurchase(null);
   };
 
+  const handlePaymentSuccess = (txHash: string) => {
+    setParsedIntent(null);
+    const successMessage: Message = {
+      id: Date.now().toString(),
+      text: `✅ Payment sent successfully! Transaction: ${txHash.slice(
+        0,
+        10,
+      )}...`,
+      isUser: false,
+    };
+    setMessages((prev) => [...prev, successMessage]);
+  };
+
+  const handleCancelPayment = () => {
+    setParsedIntent(null);
+    const cancelMessage: Message = {
+      id: Date.now().toString(),
+      text: "Payment cancelled.",
+      isUser: false,
+    };
+    setMessages((prev) => [...prev, cancelMessage]);
+  };
+
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-gray-50">
       {/* Header */}
@@ -155,6 +231,27 @@ export default function Home() {
             onCancel={handleCancelPurchase}
           />
         )}
+
+        {/* AI Payment Intent Display */}
+        {parsedIntent && parsedIntent.intent.action !== "check_balance" && (
+          <PaymentIntentDisplay intent={parsedIntent.intent} />
+        )}
+
+        {/* Payment Confirmation for send_payment */}
+        {parsedIntent &&
+          parsedIntent.intent.action === "send_payment" &&
+          address && (
+            <PaymentConfirmation
+              parsedCommand={parsedIntent.parsedCommand}
+              transaction={parsedIntent.transaction}
+              senderAddress={address}
+              onSuccess={handlePaymentSuccess}
+              onCancel={handleCancelPayment}
+            />
+          )}
+
+        {/* Balance Display for check_balance */}
+        {showBalance && address && <BalanceDisplay address={address} />}
       </div>
 
       {/* Chat Input */}

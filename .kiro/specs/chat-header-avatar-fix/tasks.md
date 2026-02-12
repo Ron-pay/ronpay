@@ -12,7 +12,7 @@ This implementation plan addresses the replacement of the placeholder avatar in 
   - Verify the file exists at the destination path
   - _Requirements: 1.1, 1.3, 4.1, 4.2_
 
-- [~] 2. Update the ChatHeader component avatar reference
+- [ ] 2. Update the ChatHeader component avatar reference
   - Modify `Frontend/apps/web/src/components/chat/ChatHeader.tsx`
   - Change the Avatar component's `src` prop from `"/ronpay-avatar.png"` to `"/images/ronpay-agent-avatar.png"`
   - Ensure all other Avatar props remain unchanged (alt, fallback, className)
@@ -32,7 +32,7 @@ This implementation plan addresses the replacement of the placeholder avatar in 
     - **Example 3: Fallback Display on Image Load Failure**
     - **Validates: Requirements 2.4**
 
-- [~] 4. Manual verification checkpoint
+- [ ] 4. Manual verification checkpoint
   - Start the Next.js development server
   - Navigate to the chat interface
   - Verify the RonPay AI logo displays correctly in the header
