@@ -1,19 +1,21 @@
+
 import { Injectable } from '@nestjs/common';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { PaymentIntent } from 'src/types';
 import { AiService } from './ai.service';
 
 @Injectable()
-export class ClaudeService implements AiService {
-  private client: Anthropic;
+export class GeminiService implements AiService {
+  private genAI: GoogleGenerativeAI;
+  private model: any;
 
   constructor() {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.warn('ANTHROPIC_API_KEY not configured in environment');
+      console.warn('GEMINI_API_KEY not configured in environment');
     }
-
-    this.client = new Anthropic({ apiKey: apiKey || '' });
+    this.genAI = new GoogleGenerativeAI(apiKey || '');
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
   }
 
   async parsePaymentIntent(userMessage: string): Promise<PaymentIntent> {
@@ -44,21 +46,17 @@ Examples:
 Return ONLY the JSON, no explanation.`;
 
     try {
-      const message = await this.client.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 1024,
-        messages: [{ role: 'user', content: prompt }],
-      });
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      let text = response.text();
+      
+      // Clean up markdown code blocks if present
+      text = text.replace(/```json\n?|\n?```/g, '').trim();
 
-      const content = message.content[0];
-      if (content.type !== 'text') {
-        throw new Error('Unexpected response type from Claude');
-      }
-
-      const result = JSON.parse(content.text);
-      return result as PaymentIntent;
+      const intent = JSON.parse(text);
+      return intent as PaymentIntent;
     } catch (error) {
-      console.error('Error parsing payment intent:', error);
+      console.error('Error parsing payment intent with Gemini:', error);
       return {
         action: 'unknown',
         confidence: 0,
@@ -66,6 +64,9 @@ Return ONLY the JSON, no explanation.`;
     }
   }
 
+  /**
+   * Generate human-friendly response for payment confirmation
+   */
   async generatePaymentConfirmation(
     amount: number,
     currency: string,
@@ -81,16 +82,9 @@ Transaction: ${txHash}
 Make it brief, friendly, and include the transaction hash. Max 2 sentences.`;
 
     try {
-      const message = await this.client.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 200,
-        messages: [{ role: 'user', content: prompt }],
-      });
-
-      const content = message.content[0];
-      return content.type === 'text'
-        ? content.text
-        : 'Payment sent successfully!';
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
     } catch (error) {
       return `Successfully sent ${amount} ${currency} to ${recipient}. Transaction: ${txHash}`;
     }
