@@ -114,8 +114,8 @@ export class VtpassService {
     billersCode: string; // phone number or smartcard or meter
     variation_code?: string; // for data/education
     amount: number;
-    phone: string; // user's phone number
-    request_id?: string; // unique request id
+    phone: string;
+    request_id?: string;
     
     // AI Context
     walletAddress: string; // User's wallet address
@@ -137,8 +137,8 @@ export class VtpassService {
       fromAddress: data.walletAddress,
       toAddress: data.serviceID, // Use serviceID as 'to' for bills
       amount: data.amount,
-      currency: 'NGN', // VTPASS uses NGN usually
-      txHash: `vtpass-${request_id}`, // Placeholder hash
+      currency: 'NGN',
+      txHash: `vtpass-${request_id}`,
       status: 'pending',
       type: this.determineTransactionType(data.serviceID),
       serviceId: data.serviceID,
