@@ -50,13 +50,34 @@ export class PaymentsService {
         throw new BadRequestException('Could not determine valid payment amount from message');
       }
 
-      if (!this.celoService.isValidAddress(intent.recipient)) {
-        throw new BadRequestException(`Invalid recipient address: ${intent.recipient}`);
+      // 1. Resolve Recipient (Phone -> Address)
+      let recipientAddress = intent.recipient;
+      if (recipientAddress && !this.celoService.isValidAddress(recipientAddress)) {
+        // Assume it's a phone number or alias
+        const resolved = await this.identityService.resolvePhoneNumber(recipientAddress);
+        if (resolved) {
+          console.log(`Resolved ${recipientAddress} to ${resolved}`);
+          recipientAddress = resolved;
+        } else {
+          throw new BadRequestException(`Unable to resolve recipient: ${recipientAddress}. Please use a valid Celo address or registered phone number.`);
+        }
+      }
+
+      if (!recipientAddress) {
+        throw new BadRequestException('Could not determine payment recipient');
+      }
+
+      if (!this.celoService.isValidAddress(recipientAddress)) {
+        throw new BadRequestException(`Invalid recipient address: ${recipientAddress}`);
       }
 
       const currency = intent.currency || 'cUSD';
+
+      // Check if authorized token (Simple validation)
+      // const supportedTokens = this.celoService.getSupportedTokens(); 
+
       const transactionData = await this.celoService.buildPaymentTransaction(
-        intent.recipient as Address,
+        recipientAddress as Address,
         intent.amount.toString(),
         currency as any, // cUSD, cKES, etc.
       );
@@ -65,7 +86,8 @@ export class PaymentsService {
         intent,
         transaction: transactionData,
         parsedCommand: {
-          recipient: intent.recipient,
+          recipient: recipientAddress,
+          originalRecipient: intent.recipient,
           amount: intent.amount,
           currency,
           memo: intent.memo,
