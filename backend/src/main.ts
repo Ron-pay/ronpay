@@ -1,19 +1,25 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
-import { nodeProfilingIntegration } from '@sentry/profiling-node';
+
 import { AppModule } from './app.module';
 import { logger } from './common/logger';
 
 async function bootstrap() {
   // Initialize Sentry for error tracking (production only)
   if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {
+    const integrations: any[] = [];
+    try {
+      const { nodeProfilingIntegration } = await import('@sentry/profiling-node');
+      integrations.push(nodeProfilingIntegration());
+    } catch (error) {
+      logger.warn('Failed to load Sentry profiling integration', { error: error.message });
+    }
+
     Sentry.init({
       dsn: process.env.SENTRY_DSN,
       environment: process.env.NODE_ENV,
-      integrations: [
-        nodeProfilingIntegration(),
-      ],
+      integrations,
       tracesSampleRate: 0.1, // 10% of transactions for performance monitoring
       profilesSampleRate: 0.1,
     });
