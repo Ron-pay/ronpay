@@ -10,6 +10,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'https://ronpay.xyz',
+      'https://ronpay.vercel.app',
       /\.ngrok-free\.dev$/, // Allow all ngrok domains
       /\.ngrok\.io$/, // Allow ngrok.io domains
     ],
