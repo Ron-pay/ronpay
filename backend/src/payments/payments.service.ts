@@ -24,7 +24,7 @@ export class PaymentsService {
    * MiniPay-compatible: Returns unsigned transaction
    */
   async parsePaymentIntent(dto: NaturalLanguagePaymentDto) {
-    // 1. Parse intent with AI (with language support)
+    // 1. Parse intent with AI
     const intent = await this.aiService.parsePaymentIntent(dto.message, dto.language);
 
     console.log('Parsed intent:', intent);
@@ -79,7 +79,7 @@ export class PaymentsService {
       const transactionData = await this.celoService.buildPaymentTransaction(
         recipientAddress as Address,
         intent.amount.toString(),
-        currency as any, // cUSD, cKES, etc.
+        currency as any,
       );
 
       return {
@@ -147,7 +147,7 @@ export class PaymentsService {
         variation_code: intent.package,
       },
       parsedCommand: {
-        recipient: 'RonPay Treasury', // Displayed to user
+        recipient: 'RonPay Treasury',
         amount: parseFloat(amountInCusd),
         currency: 'cUSD',
         memo: `Payment for ${intent.biller || 'Service'} ${intent.package || ''}`,
