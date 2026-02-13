@@ -42,7 +42,7 @@ export class PaymentProcessor {
     let costInCusd = '0.00';
     try {
       if (data.amount > 0) {
-        const quote = await this.mentoService.getSwapQuote('cNGN', 'cUSD', data.amount.toString());
+        const quote = await this.mentoService.getSwapQuote('NGNm', 'USDm', data.amount.toString());
         costInCusd = parseFloat(quote.amountOut).toFixed(2);
       }
     } catch (e) {

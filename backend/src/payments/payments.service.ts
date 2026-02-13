@@ -113,7 +113,7 @@ export class PaymentsService {
     try {
       // Get quote: 1 cUSD -> NGN (to get the rate) OR amountInNgn cNGN -> cUSD?
       // Let's ask: "What is value of X cNGN in cUSD?"
-      const quote = await this.mentoService.getSwapQuote('cNGN', 'cUSD', amountInNgn.toString());
+      const quote = await this.mentoService.getSwapQuote('NGNm', 'USDm', amountInNgn.toString());
       amountInCusd = parseFloat(quote.amountOut).toFixed(2);
       exchangeRate = 1 / quote.price; // Derived rate
     } catch (error) {
@@ -132,7 +132,7 @@ export class PaymentsService {
     const transactionData = await this.celoService.buildPaymentTransaction(
       treasuryAddress as Address,
       amountInCusd,
-      'cUSD',
+      'USDm',
     );
 
     return {

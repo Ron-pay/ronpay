@@ -45,7 +45,7 @@ export class CeloService {
   async buildPaymentTransaction(
     to: Address,
     amount: string,
-    token: keyof typeof CELO_TOKENS = 'cUSD',
+    token: keyof typeof CELO_TOKENS = 'USDm',
     feeCurrency?: Address,
   ) {
     const amountInWei = parseUnits(amount, 18);
@@ -56,7 +56,7 @@ export class CeloService {
         to,
         value: amountInWei.toString(),
         data: '0x' as `0x${string}`,
-        feeCurrency: feeCurrency || CELO_TOKENS.cUSD, // Pay gas in cUSD by default
+        feeCurrency: feeCurrency || CELO_TOKENS.USDm, // Pay gas in USDm by default
       };
     } else {
       // ERC20 token transfer
@@ -73,7 +73,7 @@ export class CeloService {
         to: tokenAddress,
         value: '0',
         data,
-        feeCurrency: feeCurrency || CELO_TOKENS.cUSD, // Pay gas in cUSD
+        feeCurrency: feeCurrency || CELO_TOKENS.USDm, // Pay gas in USDm
       };
     }
   }
@@ -83,7 +83,7 @@ export class CeloService {
    */
   async getBalance(
     address: Address,
-    token: keyof typeof CELO_TOKENS = 'cUSD',
+    token: keyof typeof CELO_TOKENS = 'USDm',
   ): Promise<string> {
     if (token === 'CELO') {
       const balance = await this.publicClient.getBalance({ address });
