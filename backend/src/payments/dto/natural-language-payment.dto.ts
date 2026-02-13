@@ -8,6 +8,10 @@ export class NaturalLanguagePaymentDto {
   @IsEthereumAddress()
   @IsNotEmpty()
   senderAddress: string;
+
+  @IsOptional()
+  @IsString()
+  language?: 'en' | 'es' | 'pt' | 'fr'; // Optional: auto-detect if not provided
 }
 
 export class ExecutePaymentDto {

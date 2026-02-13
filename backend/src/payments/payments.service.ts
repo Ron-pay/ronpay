@@ -24,8 +24,8 @@ export class PaymentsService {
    * MiniPay-compatible: Returns unsigned transaction
    */
   async parsePaymentIntent(dto: NaturalLanguagePaymentDto) {
-    // 1. Parse intent with AI
-    const intent = await this.aiService.parsePaymentIntent(dto.message);
+    // 1. Parse intent with AI (with language support)
+    const intent = await this.aiService.parsePaymentIntent(dto.message, dto.language);
 
     console.log('Parsed intent:', intent);
 
