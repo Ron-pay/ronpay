@@ -120,7 +120,7 @@ export class WiseProvider {
       fee,
       exchangeRate: rate,
       recipientReceives,
-      totalCost: amount, // Wise deducts from amount, not additional
+        totalCost, // Use calculated totalCost, not amount
     };
   }
 

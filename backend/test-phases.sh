@@ -55,7 +55,7 @@ echo ""
 
 # Test 4: Multi-Language - English
 echo "Test 4: Multi-Language Parsing - English"
-RESPONSE=$(curl -s -X POST "$BASE_URL/payments/parse" \
+RESPONSE=$(curl -s -X POST "$BASE_URL/payments/parse-intent" \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Send 50 dollars to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
@@ -74,7 +74,7 @@ echo ""
 
 # Test 5: Multi-Language - Spanish
 echo "Test 5: Multi-Language Parsing - Spanish"
-RESPONSE=$(curl -s -X POST "$BASE_URL/payments/parse" \
+RESPONSE=$(curl -s -X POST "$BASE_URL/payments/parse-intent" \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Enviar 100 dólares a 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
@@ -94,7 +94,7 @@ echo ""
 
 # Test 6: Multi-Language - Portuguese
 echo "Test 6: Multi-Language Parsing - Portuguese"
-RESPONSE=$(curl -s -X POST "$BASE_URL/payments/parse" \
+RESPONSE=$(curl -s -X POST "$BASE_URL/payments/parse-intent" \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Enviar R$ 200 para 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
@@ -114,7 +114,7 @@ echo ""
 
 # Test 7: Multi-Language - French  
 echo "Test 7: Multi-Language Parsing - French"
-RESPONSE=$(curl -s -X POST "$BASE_URL/payments/parse" \
+RESPONSE=$(curl -s -X POST "$BASE_URL/payments/parse-intent" \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Envoyer 150€ à 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
