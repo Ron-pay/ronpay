@@ -1,59 +1,53 @@
-
 import { Injectable } from '@nestjs/common';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { PaymentIntent } from 'src/types';
 import { AiService } from './ai.service';
+import { detectLanguage, SupportedLanguage, getDefaultCurrency } from './language-detection';
+import { PAYMENT_INTENT_PROMPTS, CONFIRMATION_PROMPTS } from './prompts';
 
 @Injectable()
 export class GeminiService implements AiService {
-  private genAI: GoogleGenerativeAI;
-  private model: any;
+  private ai: GoogleGenAI;
 
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.warn('GEMINI_API_KEY not configured in environment');
     }
-    this.genAI = new GoogleGenerativeAI(apiKey || '');
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.ai = new GoogleGenAI({ apiKey: apiKey || '' });
   }
 
-  async parsePaymentIntent(userMessage: string): Promise<PaymentIntent> {
-    const prompt = `You are a payment intent parser for RonPay, a Celo-based payment agent.
+  async parsePaymentIntent(
+    userMessage: string,
+    language?: SupportedLanguage,
+  ): Promise<PaymentIntent> {
+    // Auto-detect language if not provided
+    const detectedLang = language || detectLanguage(userMessage);
+    console.log(`[GeminiService] Parsing intent in language: ${detectedLang}`);
 
-Extract payment details from the user's message and return ONLY valid JSON.
-
-User message: "${userMessage}"
-
-Return JSON with these fields:
-{
-  "action": "send_payment" | "check_balance" | "pay_bill" | "buy_airtime" | "buy_data" | "unknown",
-  "recipient": "wallet address, phone number, or smartcard number",
-  "amount": number (extract numeric value, null if not mentioned),
-  "currency": "cUSD" | "cKES" | "cREAL" | "CELO" | "NGN" | "KES" (default cUSD for crypto, NGN for Nigerian bills),
-  "memo": "optional description",
-  "biller": "provider name if applicable (e.g. MTN, Airtel, DSTV, IKEDC, EEDC)",
-  "package": "plan/bundle name if applicable (e.g. 1GB, Premium, Prepaid)",
-  "confidence": 0.0 to 1.0
-}
-
-Examples:
-- "Send $100 to 0x123..." → {"action":"send_payment","recipient":"0x123...","amount":100,"currency":"cUSD","biller":null,"package":null,"confidence":0.95}
-- "Buy 1000 Naira MTN airtime for 08012345678" → {"action":"buy_airtime","recipient":"08012345678","amount":1000,"currency":"NGN","biller":"MTN","package":null,"confidence":0.95}
-- "Pay my DSTV Premium subscription with smartcard 1234567890" → {"action":"pay_bill","recipient":"1234567890","amount":null,"currency":"NGN","biller":"DSTV","package":"Premium","confidence":0.9}
-- "Buy 1GB MTN data for 080..." → {"action":"buy_data","recipient":"080...","amount":null,"currency":"NGN","biller":"MTN","package":"1GB","confidence":0.9}
-
-Return ONLY the JSON, no explanation.`;
+    // Get language-specific prompt
+    const basePrompt = PAYMENT_INTENT_PROMPTS[detectedLang];
+    const fullPrompt = `${basePrompt}\n\nUser message: "${userMessage}"`;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      let text = response.text();
+      const response = await this.ai.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: fullPrompt,
+      });
+
+      let text = response?.text;
+      if (!text) throw new Error('Empty response from Gemini');
       
       // Clean up markdown code blocks if present
       text = text.replace(/```json\n?|\n?```/g, '').trim();
 
       const intent = JSON.parse(text);
+
+      // Set default currency based on language if not specified
+      if (!intent.currency) {
+        intent.currency = getDefaultCurrency(detectedLang);
+      }
+
       return intent as PaymentIntent;
     } catch (error) {
       console.error('Error parsing payment intent with Gemini:', error);
@@ -72,21 +66,40 @@ Return ONLY the JSON, no explanation.`;
     currency: string,
     recipient: string,
     txHash: string,
+    language: SupportedLanguage = 'en',
   ): Promise<string> {
-    const prompt = `Generate a friendly confirmation message for this payment:
-
-Amount: ${amount} ${currency}
-Recipient: ${recipient}
-Transaction: ${txHash}
-
-Make it brief, friendly, and include the transaction hash. Max 2 sentences.`;
+    const basePrompt = CONFIRMATION_PROMPTS[language];
+    const fullPrompt = `${basePrompt}\n\nAmount: ${amount} ${currency}\nRecipient: ${recipient}\nTransaction: ${txHash}`;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      return response.text();
+      const response = await this.ai.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: fullPrompt,
+      });
+      return response?.text || this.getDefaultConfirmation(amount, currency, recipient, txHash, language);
     } catch (error) {
-      return `Successfully sent ${amount} ${currency} to ${recipient}. Transaction: ${txHash}`;
+      console.error('Error generating confirmation with Gemini:', error);
+      return this.getDefaultConfirmation(amount, currency, recipient, txHash, language);
     }
+  }
+
+  /**
+   * Fallback confirmation messages in multiple languages
+   */
+  private getDefaultConfirmation(
+    amount: number,
+    currency: string,
+    recipient: string,
+    txHash: string,
+    language: SupportedLanguage,
+  ): string {
+    const confirmations: Record<SupportedLanguage, string> = {
+      en: `Successfully sent ${amount} ${currency} to ${recipient}. Transaction: ${txHash}`,
+      es: `Se enviaron ${amount} ${currency} a ${recipient} exitosamente. Transacción: ${txHash}`,
+      pt: `${amount} ${currency} enviados para ${recipient} com sucesso. Transação: ${txHash}`,
+      fr: `${amount} ${currency} envoyés à ${recipient} avec succès. Transaction: ${txHash}`,
+    };
+
+    return confirmations[language] || confirmations.en;
   }
 }

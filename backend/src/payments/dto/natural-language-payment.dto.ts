@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsEthereumAddress, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEthereumAddress, IsNumber, IsIn } from 'class-validator';
 
 export class NaturalLanguagePaymentDto {
   @IsString()
@@ -12,6 +12,10 @@ export class NaturalLanguagePaymentDto {
   @IsOptional()
   @IsString()
   language?: 'en' | 'es' | 'pt' | 'fr';
+  @IsOptional()
+  @IsString()
+  @IsIn(['gemini', 'claude'])
+  aiProvider?: 'gemini' | 'claude';
 }
 
 export class ExecutePaymentDto {

@@ -22,7 +22,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.74.0",
     "@celo/identity": "^5.1.2",
-    "@google/generative-ai": "^0.24.1",
+    "@google/genai": "^1.41.0",
     "@mento-protocol/mento-sdk": "2.0.0-beta.16",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/bull": "^11.0.4",
@@ -39,6 +39,7 @@
     "bull": "^4.16.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
+    "dotenv": "^17.3.1",
     "ioredis": "^5.9.2",
     "pg": "^8.18.0",
     "reflect-metadata": "^0.2.2",

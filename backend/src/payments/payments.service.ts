@@ -3,6 +3,8 @@ import { CeloService } from '../blockchain/celo.service';
 import { MentoService } from '../blockchain/mento.service';
 import { IdentityService } from '../blockchain/identity.service';
 import { AiService } from '../ai/ai.service';
+import { ClaudeService } from '../ai/claude.service';
+import { GeminiService } from '../ai/gemini.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { VtpassService } from '../vtpass/vtpass.service';
 import { NaturalLanguagePaymentDto, ExecutePaymentDto } from './dto/natural-language-payment.dto';
@@ -17,6 +19,8 @@ export class PaymentsService {
     private mentoService: MentoService,
     private identityService: IdentityService,
     private vtpassService: VtpassService,
+    private claudeService: ClaudeService,
+    private geminiService: GeminiService,
   ) {}
 
   /**
@@ -24,8 +28,17 @@ export class PaymentsService {
    * MiniPay-compatible: Returns unsigned transaction
    */
   async parsePaymentIntent(dto: NaturalLanguagePaymentDto) {
-    // 1. Parse intent with AI
-    const intent = await this.aiService.parsePaymentIntent(dto.message, dto.language);
+    // 1. Select AI Service
+    let aiService = this.aiService; // Default injected service
+
+    if (dto.aiProvider === 'claude') {
+      aiService = this.claudeService;
+    } else if (dto.aiProvider === 'gemini') {
+      aiService = this.geminiService;
+    }
+
+    // 2. Parse intent with selected AI
+    const intent = await aiService.parsePaymentIntent(dto.message, dto.language);
 
     console.log('Parsed intent:', intent);
 
