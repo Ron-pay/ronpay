@@ -5,6 +5,7 @@ import { SchedulerController } from './scheduler.controller';
 import { PaymentProcessor } from './payment.processor';
 import { PaymentsModule } from '../payments/payments.module';
 import { BlockchainModule } from '../blockchain/blockchain.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { BlockchainModule } from '../blockchain/blockchain.module';
     }),
     PaymentsModule,
     BlockchainModule,
+    NotificationsModule,
   ],
   providers: [SchedulerService, PaymentProcessor],
   controllers: [SchedulerController],
