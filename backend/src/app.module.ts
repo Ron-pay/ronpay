@@ -11,6 +11,7 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { VtpassModule } from './vtpass/vtpass.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { FeesModule } from './fees/fees.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { FeesModule } from './fees/fees.module';
     VtpassModule,
     SchedulerModule,
     FeesModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
