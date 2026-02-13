@@ -1,15 +1,7 @@
 # Celo Stablecoin Support - Token Reference
 
 ## Overview
-This document explains the supported Celo stablecoins in RonPay and the recent Mento Protocol rebranding.
-
-## Mento Protocol Rebranding (November 2025)
-
-Mento Protocol stablecoins were rebranded:
-- **Old:** `cUSD`, `cEUR`, `cREAL`, `cKES`, `cNGN` (c-prefix)
-- **New:** `USDm`, `EURm`, `BRLm`, `KESm`, `NGNm` (m-suffix)
-
-The **same smart contract addresses** are used for both naming conventions.
+RonPay uses the modern Mento Protocol naming convention for all stablecoins.
 
 ## Currently Supported Tokens
 
@@ -17,11 +9,11 @@ The **same smart contract addresses** are used for both naming conventions.
 
 | Token Symbol | Name | Address | Type |
 |-------------|------|---------|------|
-| `cUSD` / `USDm` | Mento Dollar | `0x765DE816845861e75A25fCA122bb6898B8B1282a` | Mento Stablecoin |
-| `cEUR` / `EURm` | Mento Euro | `0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73` | Mento Stablecoin |
-| `cREAL` / `BRLm` | Mento Brazilian Real | `0xe8537a3d056DA446677B9E9d6c5dB704EaAb4787` | Mento Stablecoin |
-| `cKES` / `KESm` | Mento Kenyan Shilling | `0x456a3D042C0DbD3db53D5489e98dFb038553B0d0` | Mento Stablecoin |
-| `cNGN` / `NGNm` | Mento Nigerian Naira | `0xC6a531d7CdEbaD7FDFAfb6d96D9C8724Ceb9C0A7` | Mento Stablecoin |
+| `USDm` | Mento Dollar | `0x765DE816845861e75A25fCA122bb6898B8B1282a` | Mento Stablecoin |
+| `EURm` | Mento Euro | `0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73` | Mento Stablecoin |
+| `BRLm` | Mento Brazilian Real | `0xe8537a3d056DA446677B9E9d6c5dB704EaAb4787` | Mento Stablecoin |
+| `KESm` | Mento Kenyan Shilling | `0x456a3D042C0DbD3db53D5489e98dFb038553B0d0` | Mento Stablecoin |
+| `NGNm` | Mento Nigerian Naira | `0xC6a531d7CdEbaD7FDFAfb6d96D9C8724Ceb9C0A7` | Mento Stablecoin |
 | `cUSDC` | Native USDC | `0xceb09c2a6886ed289893d562b87f8d689b9d118c` | Circle Stablecoin |
 | `cUSDT` | Native USDT | `0xb020D981420744F6b0FedD22bB67cd37Ce18a1d5` | Tether Stablecoin |
 | `CELO` | Celo Native Token | Native | Utility Token |
@@ -41,14 +33,14 @@ The **same smart contract addresses** are used for both naming conventions.
 | `CHFm` | Mento Swiss Franc | Need to verify mainnet address |
 | `AUDm` | Mento Australian Dollar | Need to verify mainnet address |
 
-## Answer to Your Question: cUSDC and cUSDT
+## Native USDC and USDT
 
-**✅ YES, you can add cUSDC and cUSDT!**
+**✅ Both cUSDC and cUSDT are supported!**
 
 - **cUSDC** (Native USDC): `0xceb09c2a6886ed289893d562b87f8d689b9d118c`
 - **cUSDT** (Native USDT): `0xb020D981420744F6b0FedD22bB67cd37Ce18a1d5`
 
-Both are **native Celo tokens** (not bridged), issued by Circle and Tether respectively. They are fully ERC-20 compatible and work with Mento Protocol for swaps.
+Both are native Celo tokens issued by Circle and Tether, fully ERC-20 compatible and work with Mento Protocol for swaps.
 
 ## Remittance Corridors
 
@@ -67,21 +59,15 @@ Both are **native Celo tokens** (not bridged), issued by Circle and Tether respe
 
 ## Usage in Code
 
-### Using Old Naming (Backwards Compatible)
-```typescript
-const quote = await mentoService.getSwapQuote('cUSD', 'cNGN', '100');
-const balance = await celoService.getBalance(address, 'cKES');
-```
-
-### Using New Naming (Recommended)
+### Mento Stablecoins
 ```typescript
 const quote = await mentoService.getSwapQuote('USDm', 'NGNm', '100');
 const balance = await celoService.getBalance(address, 'KESm');
 ```
 
-### Using Native USDC/USDT
+### Native USDC/USDT
 ```typescript
-const balance = await celoService.getBalance(address, 'cUSDC');
+const usdcBalance = await celoService.getBalance(address, 'cUSDC');
 const usdtBalance = await celoService.getBalance(address, 'cUSDT');
 ```
 

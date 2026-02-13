@@ -4,17 +4,8 @@ import { celo } from 'viem/chains';
 import { ERC20_ABI } from '../abis/erc20';
 
 // Celo token addresses on Mainnet
-// NOTE: Mento Protocol rebranded stablecoins from 'cXXX' to 'XXXm' in November 2025
-// Both naming conventions are supported for backwards compatibility
 export const CELO_TOKENS = {
-  // === Mento Protocol Stablecoins (Original 'c' prefix) ===
-  cUSD: '0x765DE816845861e75A25fCA122bb6898B8B1282a',    // Mento Dollar (now USDm)
-  cEUR: '0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73',    // Mento Euro (now EURm)
-  cREAL: '0xe8537a3d056DA446677B9E9d6c5dB704EaAb4787',   // Mento Brazilian Real (now BRLm)
-  cKES: '0x456a3D042C0DbD3db53D5489e98dFb038553B0d0',    // Mento Kenyan Shilling (now KESm)
-  cNGN: '0xC6a531d7CdEbaD7FDFAfb6d96D9C8724Ceb9C0A7',    // Mento Nigerian Naira (now NGNm)
 
-  // === Mento Protocol Stablecoins (New 'm' suffix - Same addresses as above) ===
   USDm: '0x765DE816845861e75A25fCA122bb6898B8B1282a',   // Mento Dollar (formerly cUSD)
   EURm: '0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73',   // Mento Euro (formerly cEUR)
   BRLm: '0xe8537a3d056DA446677B9E9d6c5dB704EaAb4787',   // Mento Brazilian Real (formerly cREAL)
@@ -116,20 +107,20 @@ export class CeloService {
    * Get multiple token balances at once
    */
   async getAllBalances(address: Address) {
-    const [cUSD, CELO, cKES, cEUR, cREAL] = await Promise.all([
-      this.getBalance(address, 'cUSD'),
+    const [USDm, CELO, KESm, EURm, BRLm] = await Promise.all([
+      this.getBalance(address, 'USDm'),
       this.getBalance(address, 'CELO'),
-      this.getBalance(address, 'cKES'),
-      this.getBalance(address, 'cEUR'),
-      this.getBalance(address, 'cREAL'),
+      this.getBalance(address, 'KESm'),
+      this.getBalance(address, 'EURm'),
+      this.getBalance(address, 'BRLm'),
     ]);
 
     return {
-      cUSD: parseFloat(cUSD),
+      USDm: parseFloat(USDm),
       CELO: parseFloat(CELO),
-      cKES: parseFloat(cKES),
-      cEUR: parseFloat(cEUR),
-      cREAL: parseFloat(cREAL),
+      KESm: parseFloat(KESm),
+      EURm: parseFloat(EURm),
+      BRLm: parseFloat(BRLm),
     };
   }
 
