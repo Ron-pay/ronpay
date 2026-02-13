@@ -10,6 +10,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { VtpassModule } from './vtpass/vtpass.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
+import { FeesModule } from './fees/fees.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     TransactionsModule,
     VtpassModule,
     SchedulerModule,
+    FeesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
