@@ -100,6 +100,78 @@ class ApiService {
   }
 
   /**
+   * Parse payment intent directly (bypasses AI)
+   */
+  async parseIntentDirect(
+    intent: any,
+    senderAddress: string,
+  ): Promise<ParseIntentResponse> {
+    try {
+      const response = await fetch(
+        `${BACKEND_URL}/payments/parse-intent-direct`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            intent,
+            senderAddress,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const error: ApiError = await response.json();
+        throw new Error(
+          error.message || "Failed to parse payment intent directly",
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Direct intent parsing failed: ${error.message}`);
+      }
+      throw new Error("Failed to connect to payment service");
+    }
+  }
+
+  /**
+   * Purchase airtime after payment to treasury
+   */
+  async purchaseAirtime(data: {
+    txHash: string;
+    phoneNumber: string;
+    amount: number;
+    provider: string;
+    walletAddress: string;
+    memo?: string;
+  }): Promise<any> {
+    try {
+      const response = await fetch(`${BACKEND_URL}/payments/purchase-airtime`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error: ApiError = await response.json();
+        throw new Error(error.message || "Failed to purchase airtime");
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Airtime purchase failed: ${error.message}`);
+      }
+      throw new Error("Failed to connect to payment service");
+    }
+  }
+
+  /**
    * Health check
    */
   async healthCheck(): Promise<boolean> {

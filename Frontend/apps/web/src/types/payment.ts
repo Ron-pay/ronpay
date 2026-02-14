@@ -7,6 +7,7 @@ export type PaymentAction =
   | "send_payment"
   | "check_balance"
   | "pay_bill"
+  | "buy_airtime"
   | "unknown";
 
 export interface PaymentIntent {
@@ -66,4 +67,27 @@ export interface ApiError {
   message: string;
   statusCode?: number;
   error?: string;
+}
+
+export interface PurchaseAirtimeRequest {
+  txHash: string;
+  phoneNumber: string;
+  amount: number;
+  provider: string;
+  walletAddress: string;
+  memo?: string;
+}
+
+export interface AirtimePurchaseResponse {
+  success: boolean;
+  message: string;
+  vtpassTransactionId?: string;
+  localTxHash?: string;
+  blockchainTxHash?: string;
+  phoneNumber?: string;
+  provider?: string;
+  amount?: number;
+  currency?: string;
+  status?: "initiated" | "pending" | "delivered" | "failed";
+  transactionDate?: string;
 }

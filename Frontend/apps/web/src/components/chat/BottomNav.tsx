@@ -1,6 +1,7 @@
 "use client";
 
 import { Home, Wallet, Gift, User } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface BottomNavProps {
@@ -13,6 +14,7 @@ const navItems = [
   { id: "wallet", label: "Wallet", icon: Wallet },
   { id: "rewards", label: "Rewards", icon: Gift },
   { id: "profile", label: "Profile", icon: User },
+  { id: "test", href: "/test", label: "Test", icon: User },
 ];
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
@@ -23,6 +25,26 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
 
+          // If item has href, render as Link
+          if ("href" in item && item.href) {
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                className={cn(
+                  "flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors",
+                  isActive
+                    ? "text-green-600"
+                    : "text-gray-500 hover:text-gray-700",
+                )}
+              >
+                <Icon className={cn("h-5 w-5", isActive && "fill-green-600")} />
+                <span className="text-xs font-medium">{item.label}</span>
+              </Link>
+            );
+          }
+
+          // Otherwise render as button
           return (
             <button
               key={item.id}
