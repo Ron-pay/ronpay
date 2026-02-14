@@ -246,6 +246,8 @@ export class PaymentsService {
         'USDm',
         amountInNgn.toString(),
       );
+
+      console.log('Mento quote:', JSON.stringify(quote, null, 2));
       amountInCusd = parseFloat(quote.amountOut).toFixed(2);
       exchangeRate = 1 / quote.price; // Derived rate
     } catch (error) {
