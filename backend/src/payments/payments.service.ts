@@ -437,11 +437,13 @@ export class PaymentsService {
     });
 
     // 1. Validate parameters
-    const { phone, serviceID, amount } = this.vtpassService.validateAirtimeFlow({
-      recipient: dto.phoneNumber,
-      amount: dto.amount,
-      biller: dto.provider,
-    });
+    const { phone, serviceID, amount } = this.vtpassService.validateAirtimeFlow(
+      {
+        recipient: dto.phoneNumber,
+        amount: dto.amount,
+        biller: dto.provider,
+      },
+    );
 
     // 2. Call VTPASS to purchase airtime
     try {
@@ -454,12 +456,14 @@ export class PaymentsService {
       });
 
       // 3. Format response
-      const transactionStatus = response.content?.transactions?.status || 'pending';
-      
+      const transactionStatus =
+        response.content?.transactions?.status || 'pending';
+
       return {
         success: transactionStatus === 'delivered',
         message: response.response_description || 'Airtime purchase processing',
-        vtpassTransactionId: response.content?.transactions?.transactionId || response.requestId,
+        vtpassTransactionId:
+          response.content?.transactions?.transactionId || response.requestId,
         localTxHash: response.localTxHash,
         blockchainTxHash: dto.txHash,
         phoneNumber: phone,
@@ -468,18 +472,17 @@ export class PaymentsService {
         currency: 'NGN',
         status: transactionStatus,
         transactionDate: new Date(response.transaction_date || Date.now()),
-        estimatedDeliveryTime: 
-          transactionStatus === 'delivered' 
-            ? 'Airtime delivered successfully' 
+        estimatedDeliveryTime:
+          transactionStatus === 'delivered'
+            ? 'Airtime delivered successfully'
             : 'Airtime will be delivered in 2-3 minutes',
         fullResponse: response, // Return full response for debugging
       };
     } catch (error) {
       console.error('[PaymentsService] Airtime purchase failed:', error);
       throw new InternalServerErrorException(
-        `Failed to process airtime purchase: ${error.message}`
+        `Failed to process airtime purchase: ${error.message}`,
       );
     }
   }
 }
-

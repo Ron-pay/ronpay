@@ -196,8 +196,9 @@ export class VtpassService {
       ) {
         // Check the actual transaction status in the response
         const transactionStatus = responseData.content?.transactions?.status;
-        const finalStatus = transactionStatus === 'delivered' ? 'success' : 'pending';
-        
+        const finalStatus =
+          transactionStatus === 'delivered' ? 'success' : 'pending';
+
         await this.transactionsService.updateStatus(
           transaction.txHash,
           finalStatus,
