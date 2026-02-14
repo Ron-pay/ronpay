@@ -38,7 +38,7 @@ export class ClaudeService implements AiService {
 
     try {
       const message = await this.client.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-haiku-20240307',
         max_tokens: 1024,
         messages: [{ role: 'user', content: fullPrompt }],
       });
@@ -48,7 +48,27 @@ export class ClaudeService implements AiService {
         throw new Error('Unexpected response type from Claude');
       }
 
-      const result = JSON.parse(content.text);
+      let text = content.text;
+
+      // Try to extract JSON between curly braces if it's not a direct JSON string
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        text = jsonMatch[0];
+      }
+
+      // Clean up markdown code blocks if present
+      text = text.replace(/```json\n?|\n?```/g, '').trim();
+
+      const result = JSON.parse(text);
+
+      // Normalize action names if AI uses slightly different ones
+      if (result.action === 'send' || result.action === 'transfer') {
+        result.action = 'send_payment';
+      }
+
+      if (result.action === 'balance') {
+        result.action = 'check_balance';
+      }
 
       // Set default currency based on language if not specified
       if (!result.currency) {
@@ -80,7 +100,7 @@ export class ClaudeService implements AiService {
 
     try {
       const message = await this.client.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-haiku-20240307',
         max_tokens: 200,
         messages: [{ role: 'user', content: fullPrompt }],
       });
